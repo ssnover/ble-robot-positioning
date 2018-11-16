@@ -5,6 +5,7 @@ file: dead_reckoning.py
 
 from collections import namedtuple
 import datetime.datetime.now
+from math import cos, sin, pi
 from statistics import median
 import threading
 import time
@@ -115,13 +116,13 @@ class DeadReckoning:
 
             # change in posiiton = (change in velocity) * (change in time) / 2
             # division by two comes for average velocity over the period
-            self.my_current_position.x = (velocity_x_current - velocity_x_previous) 
+            self.my_current_position.x = ((velocity_x_current - velocity_x_previous) 
                                          / self.accel_freq 
-                                         / 2 
+                                         / 2) * cos(pi / self.my_current_orientation) 
                                          + self.my_current_position.x
-            self.my_current_position.y = (velocity_y_current - velocity_y_previous) 
+            self.my_current_position.y = ((velocity_y_current - velocity_y_previous) 
                                          / self.accel_freq 
-                                         / 2 
+                                         / 2) * sin(pi / self.my_current_orientation)
                                          + self.my_current_position.y
             self.my_current_position.z = (velocity_z_current - velocity_z_previous) 
                                          / self.accel_freq 
@@ -143,7 +144,7 @@ def main():
     """
     Tests the dead reckoning class by printing the total lateral movement.
     """
-    my_position_tracker = DeadReckoning()
+    my_position_tracker = DeadReckoning(accelerometer_frequency=100, magnetometer_frequency=15)
     my_position_tracker.begin()
 
     try:
