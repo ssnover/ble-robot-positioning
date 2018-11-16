@@ -87,7 +87,26 @@ class LSM303(object):
         reordered_mag = magX, magY, magZ
         return (accel, reordered_mag)
 
-    def set_mag_gain(gain=LSM303_MAGGAIN_1_3):
+    def read_accelerometer(self):
+        """
+        Read the accelerometer value. A tuple will be returned with:
+          (accel_x, accel_y, accel_z)
+        """
+        accel_raw = self._accel.readList(LSM303_REGISTER_ACCEL_OUT_X_L_A | 0x80, 6)
+        accel = struct.unpack('<hhh', accel_raw)
+        accel = (accel[0] >> 4, accel[1] >> 4, accel[2] >> 4)
+        return accel
+
+    def read_magnetometer(self):
+        """
+        Read the magnetometer value. A tuple will be returned with:
+          (mag_x, mag_y, mag_z)
+        """
+        mag_raw = self._mag.readList(LSM303_REGISTER_MAG_OUT_X_H_M, 6)
+        magX, magZ, magY = struct.unpack('>hhh', mag_raw)
+        return (magX, magY, magZ)
+
+    def set_mag_gain(self, gain=LSM303_MAGGAIN_1_3):
         """Set the magnetometer gain.  Gain should be one of the following
         constants:
          - LSM303_MAGGAIN_1_3 = +/- 1.3 (default)
