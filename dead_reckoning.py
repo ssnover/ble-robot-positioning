@@ -13,11 +13,14 @@ import time
 import Adafruit.Adafruit_LSM303 as Adafruit_LSM303
 
 #Position = namedtuple("Position", "x y z")
+
+
 class Position(object):
     def __init__(self, x, y, z):
         self.x = x
         self.y = y
         self.z = z
+
 
 class DeadReckoning:
     """
@@ -148,9 +151,18 @@ class DeadReckoning:
         """
         self.my_lsm303.set_magnetometer_datarate(
             Adafruit_LSM303.LSM303_MAG_RATE_30_HZ)
-        (x, y, _) = self.my_lsm303.read_magnetometer()
-        self.my_initial_orientation = atan2(float(y), float(x))
 
+        # Take 3 magnetometer measurements and take the mean to get a
+        # more accurate starting position.
+        azimuth_sum = 0
+        for _ in range(0, 3):
+            time.sleep(1 / self.mag_freq)
+            (x, y, _) = self.my_lsm303.read_magnetometer()
+            azimuth = atan2(float(y), float(x))
+            azimuth_sum += azimuth
+        self.my_initial_orientation = azimuth_sum / 3
+
+        # Repeatedly measure the magnetometer and set the new orientation
         while self.my_app_is_running:
             time.sleep(1 / self.mag_freq)
 
@@ -172,9 +184,9 @@ def main():
     try:
         while True:
             current_position = my_position_tracker.get_current_position()
-            print("Distance Traveled - x: {}, y: {}, z: {}".format(current_position.x,
-                                                                   current_position.y,
-                                                                   current_position.z))
+            print("Distance Traveled - x: {0:.2f} mm, y: {0:.2f} mm, z: {0:.2f} mm".format(current_position.x*1000,
+                                                                                           current_position.y*1000,
+                                                                                           current_position.z*1000))
             current_orientation = my_position_tracker.get_current_heading()
             print("Change in Heading - {} degrees".format(current_orientation * 180 / pi))
             time.sleep(1)
