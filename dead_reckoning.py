@@ -136,12 +136,12 @@ class DeadReckoning:
 
             # change in posiiton = (change in velocity) * (change in time) / 2
             # division by two comes for average velocity over the period
-            self.my_current_position.x = ((velocity_x_current - velocity_x_previous) / self.accel_freq / 2) * cos(
+            self.my_current_position.x = ((velocity_x_current - velocity_x_previous) / self.accel_freq) * cos(
                 self.my_current_orientation) + self.my_current_position.x
-            self.my_current_position.y = ((velocity_y_current - velocity_y_previous) / self.accel_freq / 2) * sin(
+            self.my_current_position.y = ((velocity_y_current - velocity_y_previous) / self.accel_freq) * sin(
                 self.my_current_orientation) + self.my_current_position.y
             self.my_current_position.z = (
-                velocity_z_current - velocity_z_previous) / self.accel_freq / 2 + self.my_current_position.z
+                velocity_z_current - velocity_z_previous) / self.accel_freq + self.my_current_position.z
 
         return 0
 
@@ -184,9 +184,9 @@ def main():
     try:
         while True:
             current_position = my_position_tracker.get_current_position()
-            print("Distance Traveled - x: {0:.2f} mm, y: {0:.2f} mm, z: {0:.2f} mm".format(current_position.x*1000,
-                                                                                           current_position.y*1000,
-                                                                                           current_position.z*1000))
+            print("Distance Traveled - x: {0:.2f} mm, y: {0:.2f} mm, z: {0:.2f} mm".format(current_position.x*1e6,
+                                                                                           current_position.y*1e6,
+                                                                                           current_position.z*1e6))
             current_orientation = my_position_tracker.get_current_heading()
             print("Change in Heading - {} degrees".format(current_orientation * 180 / pi))
             time.sleep(1)
