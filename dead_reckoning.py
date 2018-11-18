@@ -59,6 +59,7 @@ class DeadReckoning:
         """
         self.my_app_is_running = True
         self.my_accelerometer_thread.start()
+        self.my_magnetometer_thread.start()
         return 0
 
     def stop(self):
