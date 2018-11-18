@@ -12,8 +12,12 @@ import time
 
 import Adafruit.Adafruit_LSM303 as Adafruit_LSM303
 
-Position = namedtuple("Position", "x y z")
-
+#Position = namedtuple("Position", "x y z")
+class Position(object):
+    def __init__(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
 
 class DeadReckoning:
     """
@@ -44,7 +48,10 @@ class DeadReckoning:
 
         Also scales the position to account for measurement in milli-g's.
         """
-        return self.my_current_position * 9.81 / 10e-3
+        position_meters = Position(x=self.my_current_position.x * 9.81 * 10e-3,
+                                   y=self.my_current_position.y * 9.81 * 10e-3,
+                                   z=self.my_current_position.z * 9.81 * 10e-3)
+        return position_meters
 
     def get_current_heading(self):
         """
@@ -169,7 +176,7 @@ def main():
                                                                    current_position.y,
                                                                    current_position.z))
             current_orientation = my_position_tracker.get_current_heading()
-            print("Change in Heading - {} degrees".format(current_orientation * 180 / pi)) 
+            print("Change in Heading - {} degrees".format(current_orientation * 180 / pi))
             time.sleep(1)
     except KeyboardInterrupt:
         my_position_tracker.stop()
