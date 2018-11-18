@@ -24,24 +24,24 @@ import struct
 
 # Minimal constants carried over from Arduino library:
 LSM303_ADDRESS_ACCEL = (0x32 >> 1)  # 0011001x
-LSM303_ADDRESS_MAG   = (0x3C >> 1)  # 0011110x
-                                         # Default    Type
-LSM303_REGISTER_ACCEL_CTRL_REG1_A = 0x20 # 00000111   rw
-LSM303_REGISTER_ACCEL_CTRL_REG4_A = 0x23 # 00000000   rw
-LSM303_REGISTER_ACCEL_OUT_X_L_A   = 0x28
-LSM303_REGISTER_MAG_CRA_REG_M     = 0x00
-LSM303_REGISTER_MAG_CRB_REG_M     = 0x01
-LSM303_REGISTER_MAG_MR_REG_M      = 0x02
-LSM303_REGISTER_MAG_OUT_X_H_M     = 0x03
+LSM303_ADDRESS_MAG = (0x3C >> 1)  # 0011110x
+# Default    Type
+LSM303_REGISTER_ACCEL_CTRL_REG1_A = 0x20  # 00000111   rw
+LSM303_REGISTER_ACCEL_CTRL_REG4_A = 0x23  # 00000000   rw
+LSM303_REGISTER_ACCEL_OUT_X_L_A = 0x28
+LSM303_REGISTER_MAG_CRA_REG_M = 0x00
+LSM303_REGISTER_MAG_CRB_REG_M = 0x01
+LSM303_REGISTER_MAG_MR_REG_M = 0x02
+LSM303_REGISTER_MAG_OUT_X_H_M = 0x03
 
 # Gain settings for set_mag_gain()
-LSM303_MAGGAIN_1_3 = 0x20 # +/- 1.3
-LSM303_MAGGAIN_1_9 = 0x40 # +/- 1.9
-LSM303_MAGGAIN_2_5 = 0x60 # +/- 2.5
-LSM303_MAGGAIN_4_0 = 0x80 # +/- 4.0
-LSM303_MAGGAIN_4_7 = 0xA0 # +/- 4.7
-LSM303_MAGGAIN_5_6 = 0xC0 # +/- 5.6
-LSM303_MAGGAIN_8_1 = 0xE0 # +/- 8.1
+LSM303_MAGGAIN_1_3 = 0x20  # +/- 1.3
+LSM303_MAGGAIN_1_9 = 0x40  # +/- 1.9
+LSM303_MAGGAIN_2_5 = 0x60  # +/- 2.5
+LSM303_MAGGAIN_4_0 = 0x80  # +/- 4.0
+LSM303_MAGGAIN_4_7 = 0xA0  # +/- 4.7
+LSM303_MAGGAIN_5_6 = 0xC0  # +/- 5.6
+LSM303_MAGGAIN_8_1 = 0xE0  # +/- 8.1
 # Accelerometer resolution settings
 LSM303_ACCEL_1_MG_PER_LSB = 0
 LSM303_ACCEL_2_MG_PER_LSB = 1
@@ -56,9 +56,9 @@ LSM303_ACCEL_RATE_50_HZ = 4
 LSM303_ACCEL_RATE_100_HZ = 5
 LSM303_ACCEL_RATE_200_HZ = 6
 LSM303_ACCEL_RATE_400_HZ = 7
-LSM303_ACCEL_RATE_1_620_KHZ = 8 # low power mode
-LSM303_ACCEL_RATE_5_376_KHZ = 9 # low power mode
-LSM303_ACCEL_RATE_1_344_KHZ = 9 # normal mode
+LSM303_ACCEL_RATE_1_620_KHZ = 8  # low power mode
+LSM303_ACCEL_RATE_5_376_KHZ = 9  # low power mode
+LSM303_ACCEL_RATE_1_344_KHZ = 9  # normal mode
 # Magnetometer data rate settings
 LSM303_MAG_RATE_0_75_HZ = 0
 LSM303_MAG_RATE_1_5_HZ = 1
@@ -103,7 +103,8 @@ class LSM303(object):
           ((accel X, accel Y, accel Z), (mag X, mag Y, mag Z))
         """
         # Read the accelerometer as signed 16-bit little endian values.
-        accel_raw = self._accel.readList(LSM303_REGISTER_ACCEL_OUT_X_L_A | 0x80, 6)
+        accel_raw = self._accel.readList(
+            LSM303_REGISTER_ACCEL_OUT_X_L_A | 0x80, 6)
         accel = struct.unpack('<hhh', accel_raw)
         # Convert to 12-bit values by shifting unused bits.
         accel = (accel[0] >> 4, accel[1] >> 4, accel[2] >> 4)
@@ -119,7 +120,8 @@ class LSM303(object):
         Read the accelerometer value. A tuple will be returned with:
           (accel_x, accel_y, accel_z)
         """
-        accel_raw = self._accel.readList(LSM303_REGISTER_ACCEL_OUT_X_L_A | 0x80, 6)
+        accel_raw = self._accel.readList(
+            LSM303_REGISTER_ACCEL_OUT_X_L_A | 0x80, 6)
         accel = struct.unpack('<hhh', accel_raw)
         accel = (accel[0] >> 4, accel[1] >> 4, accel[2] >> 4)
         return accel
