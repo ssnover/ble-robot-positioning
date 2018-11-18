@@ -168,6 +168,8 @@ def main():
             print("Distance Traveled - x: {}, y: {}, z: {}".format(current_position.x,
                                                                    current_position.y,
                                                                    current_position.z))
+            current_orientation = my_position_tracker.get_current_heading()
+            print("Change in Heading - {} degrees".format(current_orientation * 180 / pi)) 
             time.sleep(1)
     except KeyboardInterrupt:
         my_position_tracker.stop()
