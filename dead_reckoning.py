@@ -3,7 +3,6 @@
 file: dead_reckoning.py
 """
 
-from collections import namedtuple
 import datetime
 from math import atan2, cos, sin, pi
 from statistics import median
@@ -11,9 +10,6 @@ import threading
 import time
 
 import Adafruit.Adafruit_LSM303 as Adafruit_LSM303
-
-#Position = namedtuple("Position", "x y z")
-
 
 class Position(object):
     def __init__(self, x, y, z):
@@ -44,6 +40,7 @@ class DeadReckoning:
         self.my_magnetometer_thread = threading.Thread(target=self.magnetometer_context,
                                                        args=(),
                                                        name="Magnetometer Thread")
+        self.my_sensor_mutex = threading.Lock()
 
     def get_current_position(self):
         """
@@ -51,9 +48,9 @@ class DeadReckoning:
 
         Also scales the position to account for measurement in milli-g's.
         """
-        position_meters = Position(x=self.my_current_position.x * 9.81 * 10e-3,
-                                   y=self.my_current_position.y * 9.81 * 10e-3,
-                                   z=self.my_current_position.z * 9.81 * 10e-3)
+        position_meters = Position(x=self.my_current_position.x * 9.81 * 1e-3,
+                                   y=self.my_current_position.y * 9.81 * 1e-3,
+                                   z=self.my_current_position.z * 9.81 * 1e-3)
         return position_meters
 
     def get_current_heading(self):
@@ -83,17 +80,21 @@ class DeadReckoning:
         """
         Context for the accelerometer thread.
         """
+        self.my_sensor_mutex.acquire(blocking=True)
         self.my_lsm303.set_accelerometer_resolution(
             Adafruit_LSM303.LSM303_ACCEL_1_MG_PER_LSB)
         self.my_lsm303.set_accelerometer_datarate(
             Adafruit_LSM303.LSM303_ACCEL_RATE_200_HZ)
+        self.my_sensor_mutex.release()
 
         accel_x = []
         accel_y = []
         accel_z = []
         # collect five values
         for _ in range(0, 3):
+            self.my_sensor_mutex.acquire(blocking=True)
             accelerometer = self.my_lsm303.read_accelerometer()
+            self.my_sensor_mutex.release()
             accel_x += [accelerometer[0]]
             accel_y += [accelerometer[1]]
             accel_z += [accelerometer[2]]
@@ -120,8 +121,10 @@ class DeadReckoning:
             velocity_z_previous = velocity_z_current
 
             # now collect another sensor value
+            self.my_sensor_mutex.acquire(blocking=True)
             (acceleration_x_current, acceleration_y_current,
              acceleration_z_current) = self.my_lsm303.read_accelerometer()
+            self.my_sensor_mutex.release()
             # find the difference
             diff_a_x = acceleration_x_current - acceleration_x_previous
             diff_a_y = acceleration_y_current - acceleration_y_previous
@@ -149,15 +152,19 @@ class DeadReckoning:
         """
         Context for the magnetometer thread
         """
+        self.my_sensor_mutex.acquire(blocking=True)
         self.my_lsm303.set_magnetometer_datarate(
             Adafruit_LSM303.LSM303_MAG_RATE_30_HZ)
+        self.my_sensor_mutex.release()
 
         # Take 3 magnetometer measurements and take the mean to get a
         # more accurate starting position.
         azimuth_sum = 0
         for _ in range(0, 3):
             time.sleep(1 / self.mag_freq)
+            self.my_sensor_mutex.acquire(blocking=True)
             (x, y, _) = self.my_lsm303.read_magnetometer()
+            self.my_sensor_mutex.release()
             azimuth = atan2(float(y), float(x))
             azimuth_sum += azimuth
         self.my_initial_orientation = azimuth_sum / 3
@@ -166,7 +173,9 @@ class DeadReckoning:
         while self.my_app_is_running:
             time.sleep(1 / self.mag_freq)
 
+            self.my_sensor_mutex.acquire(blocking=True)
             (x, y, _) = self.my_lsm303.read_magnetometer()
+            self.my_sensor_mutex.release()
             # find the azimuth angle
             self.my_current_orientation = atan2(float(y), float(x))
 
@@ -184,9 +193,9 @@ def main():
     try:
         while True:
             current_position = my_position_tracker.get_current_position()
-            print("Distance Traveled - x: {0:.2f} mm, y: {0:.2f} mm, z: {0:.2f} mm".format(current_position.x*1e6,
-                                                                                           current_position.y*1e6,
-                                                                                           current_position.z*1e6))
+            print("Distance Traveled - x: {0:.3f} mm, y: {0:.3f} mm, z: {0:.3f} mm".format(current_position.x*1e3,
+                                                                                           current_position.y*1e3,
+                                                                                           current_position.z*1e3))
             current_orientation = my_position_tracker.get_current_heading()
             print("Change in Heading - {} degrees".format(current_orientation * 180 / pi))
             time.sleep(1)
