@@ -84,7 +84,7 @@ class DeadReckoning:
         self.my_lsm303.set_accelerometer_resolution(
             Adafruit_LSM303.LSM303_ACCEL_1_MG_PER_LSB)
         self.my_lsm303.set_accelerometer_datarate(
-            Adafruit_LSM303.LSM303_ACCEL_RATE_200_HZ)
+            Adafruit_LSM303.LSM303_ACCEL_RATE_50_HZ)
         self.my_sensor_mutex.release()
 
         accel_x = []
@@ -154,7 +154,7 @@ class DeadReckoning:
         """
         self.my_sensor_mutex.acquire(blocking=True)
         self.my_lsm303.set_magnetometer_datarate(
-            Adafruit_LSM303.LSM303_MAG_RATE_30_HZ)
+            Adafruit_LSM303.LSM303_MAG_RATE_15_HZ)
         self.my_sensor_mutex.release()
 
         # Take 3 magnetometer measurements and take the mean to get a
@@ -173,6 +173,9 @@ class DeadReckoning:
         while self.my_app_is_running:
             time.sleep(1 / self.mag_freq)
 
+            if not self.my_app_is_running:
+                break
+
             self.my_sensor_mutex.acquire(blocking=True)
             (x, y, _) = self.my_lsm303.read_magnetometer()
             self.my_sensor_mutex.release()
@@ -187,7 +190,7 @@ def main():
     Tests the dead reckoning class by printing the total lateral movement.
     """
     my_position_tracker = DeadReckoning(
-        accelerometer_frequency=100, magnetometer_frequency=15)
+        accelerometer_frequency=50, magnetometer_frequency=15)
     my_position_tracker.begin()
 
     try:
