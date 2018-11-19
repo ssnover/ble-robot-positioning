@@ -32,7 +32,7 @@ class DeadReckoning:
         """
         Constructor.
         """
-        self.my_lsm303 = Adafruit_LSM303.LSM303(accel_address=0x48)
+        self.my_lsm303 = Adafruit_LSM303.LSM303()
         self.my_current_position = Position(x=0.0, y=0.0, z=0.0)
         self.my_current_orientation = 0
         self.my_initial_orientation = 0
@@ -51,9 +51,9 @@ class DeadReckoning:
 
         Also scales the position to account for measurement in milli-g's.
         """
-        position_meters = Position(x=self.my_current_position.x * 9.81 * 10e-3,
-                                   y=self.my_current_position.y * 9.81 * 10e-3,
-                                   z=self.my_current_position.z * 9.81 * 10e-3)
+        position_meters = Position(x=self.my_current_position.x * 9.81 * 1e-3,
+                                   y=self.my_current_position.y * 9.81 * 1e-3,
+                                   z=self.my_current_position.z * 9.81 * 1e-3)
         return position_meters
 
     def get_current_heading(self):
@@ -184,7 +184,7 @@ def main():
     try:
         while True:
             current_position = my_position_tracker.get_current_position()
-            print("Distance Traveled - x: {0:.2f} mm, y: {0:.2f} mm, z: {0:.2f} mm".format(current_position.x*1e6,
+            print("Distance Traveled - x: {0:.4f} mm, y: {1:.4f} mm, z: {2:.4f} mm".format(current_position.x*1e6,
                                                                                            current_position.y*1e6,
                                                                                            current_position.z*1e6))
             current_orientation = my_position_tracker.get_current_heading()
