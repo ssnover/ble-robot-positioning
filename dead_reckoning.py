@@ -28,7 +28,7 @@ class DeadReckoning:
         """
         Constructor.
         """
-        self.my_lsm303 = Adafruit_LSM303.LSM303(accel_address=0x48)
+        self.my_lsm303 = Adafruit_LSM303.LSM303()
         self.my_current_position = Position(x=0.0, y=0.0, z=0.0)
         self.my_current_orientation = 0
         self.my_initial_orientation = 0
@@ -131,13 +131,13 @@ class DeadReckoning:
             diff_a_z = acceleration_z_current - acceleration_z_previous
             # calculate the current velocity in each direction
             velocity_x_current = (
-                diff_a_x / self.accel_freq) + velocity_x_previous
+                -1*diff_a_x / self.accel_freq) + velocity_x_previous
             velocity_y_current = (
-                diff_a_y / self.accel_freq) + velocity_y_previous
+                -1*diff_a_y / self.accel_freq) + velocity_y_previous
             velocity_z_current = (
-                diff_a_z / self.accel_freq) + velocity_z_previous
+                -1*diff_a_z / self.accel_freq) + velocity_z_previous
 
-            # change in posiiton = (change in velocity) * (change in time) / 2
+            # change in posiiton = (change in velocity) * (change in time)
             # division by two comes for average velocity over the period
             self.my_current_position.x = ((velocity_x_current - velocity_x_previous) / self.accel_freq) * cos(
                 self.my_current_orientation) + self.my_current_position.x
@@ -196,7 +196,7 @@ def main():
     try:
         while True:
             current_position = my_position_tracker.get_current_position()
-            print("Distance Traveled - x: {0:.3f} mm, y: {0:.3f} mm, z: {0:.3f} mm".format(current_position.x*1e3,
+            print("Distance Traveled - x: {0:.3f} mm, y: {1:.3f} mm, z: {2:.3f} mm".format(current_position.x*1e3,
                                                                                            current_position.y*1e3,
                                                                                            current_position.z*1e3))
             current_orientation = my_position_tracker.get_current_heading()
