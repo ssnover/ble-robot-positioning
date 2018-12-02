@@ -98,7 +98,7 @@ class DeadReckoning:
             accel_x += [accelerometer[0]]
             accel_y += [accelerometer[1]]
             accel_z += [accelerometer[2]]
-            time.sleep(1 * delta_time)
+            time.sleep(1 / self.accel_freq)
 
         # find the median in x, y, and z
         acceleration_x_current = median(accel_x)
@@ -112,7 +112,7 @@ class DeadReckoning:
         time_current = datetime.datetime.now()
 
         while self.my_app_is_running:
-            time.sleep(1 * delta_time)
+            time.sleep(1 / self.accel_freq)
             if not self.my_app_is_running:
                 break
             acceleration_x_previous = acceleration_x_current
