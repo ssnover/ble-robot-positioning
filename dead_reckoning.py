@@ -98,7 +98,7 @@ class DeadReckoning:
             accel_x += [accelerometer[0]]
             accel_y += [accelerometer[1]]
             accel_z += [accelerometer[2]]
-            time.sleep(1 / self.accel_freq)
+            time.sleep(1 * delta_time)
 
         # find the median in x, y, and z
         acceleration_x_current = median(accel_x)
@@ -109,8 +109,10 @@ class DeadReckoning:
         velocity_y_current = 0
         velocity_z_current = 0
 
+        time_current = datetime.datetime.now()
+
         while self.my_app_is_running:
-            time.sleep(1 / self.accel_freq)
+            time.sleep(1 * delta_time)
             if not self.my_app_is_running:
                 break
             acceleration_x_previous = acceleration_x_current
@@ -119,6 +121,12 @@ class DeadReckoning:
             velocity_x_previous = velocity_x_current
             velocity_y_previous = velocity_y_current
             velocity_z_previous = velocity_z_current
+            time_previous = time_current
+
+            # get the new time
+            time_current = datetime.datetime.now()
+            # time between sampling
+            delta_time = (time_current - time_previous).total_seconds()
 
             # now collect another sensor value
             self.my_sensor_mutex.acquire(blocking=True)
@@ -131,20 +139,20 @@ class DeadReckoning:
             diff_a_z = acceleration_z_current - acceleration_z_previous
             # calculate the current velocity in each direction
             velocity_x_current = (
-                -1*diff_a_x / self.accel_freq) + velocity_x_previous
+                -1*diff_a_x * delta_time) + velocity_x_previous
             velocity_y_current = (
-                -1*diff_a_y / self.accel_freq) + velocity_y_previous
+                -1*diff_a_y * delta_time) + velocity_y_previous
             velocity_z_current = (
-                -1*diff_a_z / self.accel_freq) + velocity_z_previous
+                -1*diff_a_z * delta_time) + velocity_z_previous
 
             # change in posiiton = (change in velocity) * (change in time)
             # division by two comes for average velocity over the period
-            self.my_current_position.x = ((velocity_x_current - velocity_x_previous) / self.accel_freq) * cos(
+            self.my_current_position.x = ((velocity_x_current - velocity_x_previous) * delta_time) * cos(
                 self.my_current_orientation) + self.my_current_position.x
-            self.my_current_position.y = ((velocity_y_current - velocity_y_previous) / self.accel_freq) * sin(
+            self.my_current_position.y = ((velocity_y_current - velocity_y_previous) * delta_time) * sin(
                 self.my_current_orientation) + self.my_current_position.y
             self.my_current_position.z = (
-                velocity_z_current - velocity_z_previous) / self.accel_freq + self.my_current_position.z
+                velocity_z_current - velocity_z_previous) * delta_time + self.my_current_position.z
 
         return 0
 
