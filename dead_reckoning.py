@@ -156,6 +156,7 @@ class DeadReckoning:
 
         # Take 3 magnetometer measurements and take the mean to get a
         # more accurate starting position.
+        headings = 0
         for _ in range(0, 3):
             time.sleep(1 / self.mag_freq)
             self.my_sensor_mutex.acquire(blocking=True)
@@ -195,7 +196,7 @@ def main():
                                                                                            current_position.y*1e3,
                                                                                            current_position.z*1e3))
             current_orientation = my_position_tracker.get_current_heading()
-            print("Change in Heading - {} degrees".format(current_orientation * 180 / pi))
+            print("Change in Heading - {} degrees".format(current_orientation))
             time.sleep(1)
     except KeyboardInterrupt:
         my_position_tracker.stop()
