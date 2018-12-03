@@ -9,7 +9,7 @@ from statistics import median
 import threading
 import time
 
-import Adafruit.Adafruit_LSM303 as Adafruit_LSM303
+import Adafruit.Adafruit_BNO055 as Adafruit_BNO055
 
 class Position(object):
     def __init__(self, x, y, z):
@@ -21,14 +21,14 @@ class Position(object):
 class DeadReckoning:
     """
     A class for tracking the current position and heading of the robot using an
-    LSM303 accelerometer and magnetometer.
+    accelerometer and magnetometer.
     """
 
     def __init__(self, accelerometer_frequency=5, magnetometer_frequency=5):
         """
         Constructor.
         """
-        self.my_lsm303 = Adafruit_LSM303.LSM303()
+        self.my_bno055 = Adafruit_BNO055.BNO055()
         self.my_current_position = Position(x=0.0, y=0.0, z=0.0)
         self.my_current_orientation = 0
         self.my_initial_orientation = 0
@@ -48,9 +48,9 @@ class DeadReckoning:
 
         Also scales the position to account for measurement in milli-g's.
         """
-        position_meters = Position(x=self.my_current_position.x * 9.81 * 1e-3,
-                                   y=self.my_current_position.y * 9.81 * 1e-3,
-                                   z=self.my_current_position.z * 9.81 * 1e-3)
+        position_meters = Position(x=self.my_current_position.x,
+                                   y=self.my_current_position.y,
+                                   z=self.my_current_position.z)
         return position_meters
 
     def get_current_heading(self):
@@ -80,20 +80,13 @@ class DeadReckoning:
         """
         Context for the accelerometer thread.
         """
-        self.my_sensor_mutex.acquire(blocking=True)
-        self.my_lsm303.set_accelerometer_resolution(
-            Adafruit_LSM303.LSM303_ACCEL_1_MG_PER_LSB)
-        self.my_lsm303.set_accelerometer_datarate(
-            Adafruit_LSM303.LSM303_ACCEL_RATE_50_HZ)
-        self.my_sensor_mutex.release()
-
         accel_x = []
         accel_y = []
         accel_z = []
         # collect five values
         for _ in range(0, 3):
             self.my_sensor_mutex.acquire(blocking=True)
-            accelerometer = self.my_lsm303.read_accelerometer()
+            accelerometer = self.my_bno055.read_linear_acceleration()
             self.my_sensor_mutex.release()
             accel_x += [accelerometer[0]]
             accel_y += [accelerometer[1]]
@@ -131,7 +124,7 @@ class DeadReckoning:
             # now collect another sensor value
             self.my_sensor_mutex.acquire(blocking=True)
             (acceleration_x_current, acceleration_y_current,
-             acceleration_z_current) = self.my_lsm303.read_accelerometer()
+             acceleration_z_current) = self.my_bno055.read_linear_acceleration()
             self.my_sensor_mutex.release()
             # find the difference
             diff_a_x = acceleration_x_current - acceleration_x_previous
@@ -160,22 +153,16 @@ class DeadReckoning:
         """
         Context for the magnetometer thread
         """
-        self.my_sensor_mutex.acquire(blocking=True)
-        self.my_lsm303.set_magnetometer_datarate(
-            Adafruit_LSM303.LSM303_MAG_RATE_15_HZ)
-        self.my_sensor_mutex.release()
 
         # Take 3 magnetometer measurements and take the mean to get a
         # more accurate starting position.
-        azimuth_sum = 0
         for _ in range(0, 3):
             time.sleep(1 / self.mag_freq)
             self.my_sensor_mutex.acquire(blocking=True)
-            (x, y, _) = self.my_lsm303.read_magnetometer()
+            (heading, _, _) = self.my_bno055.read_euler()
             self.my_sensor_mutex.release()
-            azimuth = atan2(float(y), float(x))
-            azimuth_sum += azimuth
-        self.my_initial_orientation = azimuth_sum / 3
+            headings += heading
+        self.my_initial_orientation = headings / 3
 
         # Repeatedly measure the magnetometer and set the new orientation
         while self.my_app_is_running:
@@ -185,10 +172,10 @@ class DeadReckoning:
                 break
 
             self.my_sensor_mutex.acquire(blocking=True)
-            (x, y, _) = self.my_lsm303.read_magnetometer()
+            (heading, _, _) = self.my_bno055.read_euler()
             self.my_sensor_mutex.release()
-            # find the azimuth angle
-            self.my_current_orientation = atan2(float(y), float(x))
+
+            self.my_current_orientation = heading
 
         return 0
 
@@ -198,7 +185,7 @@ def main():
     Tests the dead reckoning class by printing the total lateral movement.
     """
     my_position_tracker = DeadReckoning(
-        accelerometer_frequency=50, magnetometer_frequency=15)
+        accelerometer_frequency=10, magnetometer_frequency=5)
     my_position_tracker.begin()
 
     try:
