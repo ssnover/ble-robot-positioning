@@ -24,7 +24,11 @@ class DeadReckoning:
     accelerometer and magnetometer.
     """
 
-    def __init__(self, accelerometer_frequency=5, magnetometer_frequency=5, initial_position=Position(x=0.0, y=0.0, z=0.0)):
+    def __init__(self, 
+                 accelerometer_frequency=5, 
+                 magnetometer_frequency=5, 
+                 initial_position=Position(x=0.0, y=0.0, z=0.0),
+                 initial_heading=0):
         """
         Constructor.
         """
@@ -32,6 +36,7 @@ class DeadReckoning:
         self.my_current_position = initial_position
         self.my_current_orientation = 0
         self.my_initial_orientation = 0
+        self.my_starting_local_heading = initial_heading
         self.accel_freq = accelerometer_frequency
         self.mag_freq = magnetometer_frequency
         self.my_accelerometer_thread = threading.Thread(target=self.accelerometer_context,
@@ -41,6 +46,14 @@ class DeadReckoning:
                                                        args=(),
                                                        name="Magnetometer Thread")
         self.my_sensor_mutex = threading.Lock()
+
+    def convert_global_heading_to_local_heading(self, global_heading):
+        """
+        """
+        return (360 
+                - global_heading 
+                + self.my_initial_orientation 
+                + self.my_starting_local_heading)
 
     def get_current_position(self):
         """
@@ -61,7 +74,7 @@ class DeadReckoning:
         """
         Get the current azimuth heading relative to the start orientation.
         """
-        return self.my_current_orientation
+        return self.convert_global_heading_to_local_heading(self.my_current_orientation)
 
     def begin(self):
         """

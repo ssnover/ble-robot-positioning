@@ -34,10 +34,10 @@ def main():
     # start up BLE RSSI measurements
 
     # start up sensor fusion module
-    sensor_fusion.SensorFusion(frequency=1,
+    positioning = sensor_fusion.SensorFusion(frequency=1,
                                ble_positioning=None,
                                dead_reckoner=my_imu_sampling)
-    sensor_fusion.begin()
+    positioning.begin()
     # start robot control
 
     motor_r_pwm = 27
