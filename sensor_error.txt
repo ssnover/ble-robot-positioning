@@ -1,0 +1,9 @@
+Mean Heading: 359.9375
+Std Dev Heading: 0.0
+Linear Acceleration
+Median X: 0.0
+Std Dev X: 0.008348471099367219
+Median Y: 0.02
+Std Dev Y: 0.01103666982418523
+Median Z: 0.18
+Std Dev Z: 0.02307016088440484
