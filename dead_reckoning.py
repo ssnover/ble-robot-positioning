@@ -24,12 +24,12 @@ class DeadReckoning:
     accelerometer and magnetometer.
     """
 
-    def __init__(self, accelerometer_frequency=5, magnetometer_frequency=5):
+    def __init__(self, accelerometer_frequency=5, magnetometer_frequency=5, initial_position=Position(x=0.0, y=0.0, z=0.0)):
         """
         Constructor.
         """
         self.my_bno055 = Adafruit_BNO055.BNO055()
-        self.my_current_position = Position(x=0.0, y=0.0, z=0.0)
+        self.my_current_position = initial_position
         self.my_current_orientation = 0
         self.my_initial_orientation = 0
         self.accel_freq = accelerometer_frequency
@@ -44,14 +44,18 @@ class DeadReckoning:
 
     def get_current_position(self):
         """
-        Get the current position relative to the start position.
-
-        Also scales the position to account for measurement in milli-g's.
+        Get the current position absolute to the start position in meters.
         """
         position_meters = Position(x=self.my_current_position.x,
                                    y=self.my_current_position.y,
                                    z=self.my_current_position.z)
         return position_meters
+
+    def set_current_position(self, new_position):
+        """
+        Set the current position in meters.
+        """
+        self.my_current_position = new_position
 
     def get_current_heading(self):
         """
@@ -140,6 +144,7 @@ class DeadReckoning:
 
             # change in posiiton = (change in velocity) * (change in time)
             # division by two comes for average velocity over the period
+            # TODO: this need to account for rotation of the local environment relative to global compass
             self.my_current_position.x = ((velocity_x_current - velocity_x_previous) * delta_time) * cos(
                 self.my_current_orientation) + self.my_current_position.x
             self.my_current_position.y = ((velocity_y_current - velocity_y_previous) * delta_time) * sin(

@@ -8,6 +8,8 @@
 import threading
 import time
 
+import dead_reckoning
+
 class PositionData(object):
     def __init__(self, x, y, error):
         self.x = x
