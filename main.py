@@ -6,6 +6,8 @@ import threading
 
 import dead_reckoning
 import sensor_fusion
+import robot_control
+import RPi.GPIO as GPIO
 
 def main():
     """
@@ -37,6 +39,28 @@ def main():
                                dead_reckoner=my_imu_sampling)
     sensor_fusion.begin()
     # start robot control
+
+    motor_r_pwm = 27
+    motor_l_pwm = 22
+    motor_r_dir = 4
+    motor_l_dir = 17
+    freq = 100
+    stopped = 0
+    slow = 10
+    med = 50
+
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)
+
+    GPIO.setup(motor_r_pwm, GPIO.OUT)
+    GPIO.setup(motor_l_pwm, GPIO.OUT)
+    GPIO.setup(motor_r_dir, GPIO.OUT)
+    GPIO.setup(motor_l_dir, GPIO.OUT)
+    motor_r = GPIO.PWM(motor_r_pwm, freq)
+    motor_l = GPIO.PWM(motor_l_pwm, freq)
+
+    turn(90)
+    turn(-90)
 
     pass
 
