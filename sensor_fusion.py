@@ -83,6 +83,18 @@ class SensorFusion:
                             first.y + (first.error / (first.error + second.error)) * (second.y - first.y),
                             min(first.error, second.error))
 
+    def get_heading(self):
+        """
+        Get heading of the robot.
+        """
+        return self.my_heading_estimate
+
+    def get_position(self):
+        """
+        Get position of the robot.
+        """
+        return (self.my_position_estimate.x, self.my_position_estimate.y)
+
 def main():
     """
     Test application for the sensor fusion.
