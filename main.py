@@ -35,6 +35,7 @@ def main():
     sensor_fusion.SensorFusion(frequency=1,
                                ble_positioning=None,
                                dead_reckoner=my_imu_sampling)
+    sensor_fusion.begin()
     # start robot control
 
     pass
