@@ -53,7 +53,7 @@ class DeadReckoning:
         return (360 
                 - global_heading 
                 + self.my_initial_orientation 
-                + self.my_starting_local_heading)
+                + self.my_starting_local_heading) % 360
 
     def get_current_position(self):
         """
@@ -204,7 +204,7 @@ def main():
     Tests the dead reckoning class by printing the total lateral movement.
     """
     my_position_tracker = DeadReckoning(
-        accelerometer_frequency=10, magnetometer_frequency=5)
+        accelerometer_frequency=25, magnetometer_frequency=5)
     my_position_tracker.begin()
 
     try:
