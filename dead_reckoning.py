@@ -82,6 +82,13 @@ class DeadReckoning:
         periodically.
         """
         self.my_app_is_running = True
+        calibration_file = open('bno055_calibration.bin', 'r')
+        calibration_data = calibration_file.read().split(' ')
+        calibration_data_int = []
+        for datum in calibration_data:
+            calibration_data_int.append(int(datum))
+        calibration_file.close()
+        self.my_bno055.set_calibration(calibration_data_int)
         self.my_accelerometer_thread.start()
         self.my_magnetometer_thread.start()
         return 0
