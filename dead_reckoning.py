@@ -202,7 +202,7 @@ def main():
     Tests the dead reckoning class by printing the total lateral movement.
     """
     my_position_tracker = DeadReckoning(
-        accelerometer_frequency=25, magnetometer_frequency=5)
+        accelerometer_frequency=50, magnetometer_frequency=5)
     my_position_tracker.begin()
 
     try:

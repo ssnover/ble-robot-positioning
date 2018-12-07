@@ -59,8 +59,36 @@ def main():
     motor_r = GPIO.PWM(motor_r_pwm, freq)
     motor_l = GPIO.PWM(motor_l_pwm, freq)
 
-    turn(90)
-    turn(-90)
+    try:
+        while True:
+            new_position = dead_reckoning.Position(x = 1.0, y = 1.0, z=0.0)
+            current_position = my_position_tracker.get_current_position()
+            current_orientation = my_position_tracker.get_current_heading()
+            dist_x = new_position.x - current_position.x
+            dist_y = new_position.y - current_position.y
+            dist_tot = sqrt((dist_x)^2+(dist_y)^2)
+            newAng = arctan(dist_x/dist_y)
+            turn_tot = newAng - current_position + 360
+
+            if current_orientation > 180:
+                robot_control.turn(360-current_orientation)
+            else:
+                robot_control.turn(-1*current_orientation)
+            if dist_x > 0:
+                if dist_y > 0:
+                    robot_control.turn(-1*newAng)
+                else:
+                    robot_control.turn(-90-newAng)
+            else:
+                if dist_y < 0:
+                    robot_control.turn(90+newAng)
+                else:
+                    robot_control.turn(newAng)
+
+            robot_control.move(dist_tot)
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        my_position_tracker.stop()
 
     pass
 
