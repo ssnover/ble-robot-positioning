@@ -4,7 +4,7 @@ file: dead_reckoning.py
 """
 
 import datetime
-from math import atan2, cos, sin, pi
+from math import atan2, cos, sin, pi, radians
 from statistics import median
 import threading
 import time
@@ -82,11 +82,16 @@ class DeadReckoning:
         periodically.
         """
         self.my_app_is_running = True
+        self.my_bno055.begin()
         calibration_file = open('bno055_calibration.bin', 'r')
+        #print(calibration_file.read())
         calibration_data = calibration_file.read().split(' ')
+        print(len(calibration_data))
         calibration_data_int = []
         for datum in calibration_data:
-            calibration_data_int.append(int(datum))
+            #print(datum)
+            if datum != '':
+                calibration_data_int.append(int(datum))
         calibration_file.close()
         self.my_bno055.set_calibration(calibration_data_int)
         self.my_accelerometer_thread.start()
@@ -164,9 +169,9 @@ class DeadReckoning:
             delta_v_x = (velocity_x_current - velocity_x_previous) / 2
             delta_v_y = (velocity_y_current - velocity_y_previous) / 2
             delta_v_z = (velocity_z_current - velocity_z_previous) / 2
-            self.my_current_position.x = (delta_v_x * delta_time * cos(self.my_current_orientation) 
+            self.my_current_position.x = (delta_v_x * delta_time * cos(radians(self.my_current_orientation)) 
                                           + self.my_current_position.x)
-            self.my_current_position.y = (delta_v_y * delta_time * sin(self.my_current_orientation)
+            self.my_current_position.y = (delta_v_y * delta_time * sin(radians(self.my_current_orientation))
                                           + self.my_current_position.y)
             self.my_current_position.z = delta_v_z * delta_time + self.my_current_position.z
 
@@ -215,9 +220,9 @@ def main():
     try:
         while True:
             current_position = my_position_tracker.get_current_position()
-            print("Distance Traveled - x: {0:.3f} mm, y: {1:.3f} mm, z: {2:.3f} mm".format(current_position.x*1e3,
-                                                                                           current_position.y*1e3,
-                                                                                           current_position.z*1e3))
+            print("Distance Traveled - x: {0:.3f} mm, y: {1:.3f} mm, z: {2:.3f} mm".format(current_position.x*1e4,
+                                                                                           current_position.y*1e4,
+                                                                                           current_position.z*1e4))
             current_orientation = my_position_tracker.get_current_heading()
             print("Heading           - {:.3f} degrees".format(current_orientation))
             time.sleep(1)
