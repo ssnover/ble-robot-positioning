@@ -69,6 +69,8 @@ class DeadReckoning:
         Set the current position in meters.
         """
         self.my_current_position = new_position
+        self.my_previous_position = new_position
+        self.my_nMinus1_position = new_position
 
     def get_current_heading(self):
         """
@@ -132,6 +134,10 @@ class DeadReckoning:
         velocity_z_current = 0
 
         time_current = datetime.datetime.now()
+        self.my_current_position = Position(x=0.0, y=0.0, z=0.0)
+        self.my_previous_position = self.my_current_position
+        self.my_nMinus1_position = self.my_previous_position
+        delta_time = 1 / self.accel_freq
 
         while self.my_app_is_running:
             time.sleep(1 / self.accel_freq)
@@ -148,6 +154,7 @@ class DeadReckoning:
             # get the new time
             time_current = datetime.datetime.now()
             # time between sampling
+            delta_time_prev = delta_time
             delta_time = (time_current - time_previous).total_seconds()
 
             # now collect another sensor value
@@ -169,11 +176,16 @@ class DeadReckoning:
             delta_v_x = (velocity_x_current - velocity_x_previous) / 2
             delta_v_y = (velocity_y_current - velocity_y_previous) / 2
             delta_v_z = (velocity_z_current - velocity_z_previous) / 2
-            self.my_current_position.x = (delta_v_x * delta_time * cos(radians(self.my_current_orientation)) 
-                                          + self.my_current_position.x)
-            self.my_current_position.y = (delta_v_y * delta_time * sin(radians(self.my_current_orientation))
-                                          + self.my_current_position.y)
-            self.my_current_position.z = delta_v_z * delta_time + self.my_current_position.z
+            #self.my_current_position.x = (delta_v_x * delta_time * cos(radians(self.my_current_orientation)) 
+                                      #    + self.my_current_position.x)
+            #self.my_current_position.y = (delta_v_y * delta_time * sin(radians(self.my_current_orientation))
+                                      #    + self.my_current_position.y)
+            #self.my_current_position.z = delta_v_z * delta_time + self.my_current_position.z
+            self.my_nMinus1_position = self.my_previous_position
+            self.my_previous_position = self.my_current_position
+            self.my_current_position.x = self.my_previous_position.x + (self.my_previous_position.x- self.my_nMinus1_position.x) * delta_time / delta_time_prev + (acceleration_x_current * delta_time * delta_time)
+            self.my_current_position.y = self.my_previous_position.y + (self.my_previous_position.y- self.my_nMinus1_position.y) * delta_time / delta_time_prev + (acceleration_y_current * delta_time * delta_time)
+            self.my_current_position.z = self.my_previous_position.z + (self.my_previous_position.z- self.my_nMinus1_position.z) * delta_time / delta_time_prev + (acceleration_z_current * delta_time * delta_time)
 
         return 0
 
@@ -191,7 +203,9 @@ class DeadReckoning:
             (heading, _, _) = self.my_bno055.read_euler()
             self.my_sensor_mutex.release()
             headings += heading
-        self.my_initial_orientation = headings / 3
+        self.my_sensor_mutex.acquire(blocking=True)
+        (self.my_initial_orientation, _, _) = self.my_bno055.read_euler()
+        self.my_sensor_mutex.release()
 
         # Repeatedly measure the magnetometer and set the new orientation
         while self.my_app_is_running:
@@ -220,11 +234,12 @@ def main():
     try:
         while True:
             current_position = my_position_tracker.get_current_position()
-            print("Distance Traveled - x: {0:.3f} mm, y: {1:.3f} mm, z: {2:.3f} mm".format(current_position.x*1e4,
-                                                                                           current_position.y*1e4,
-                                                                                           current_position.z*1e4))
+            print("Distance Traveled - x: {0:.3f} mm, y: {1:.3f} mm, z: {2:.3f} mm".format(current_position.x*1e3,
+                                                                                           current_position.y*1e3,
+                                                                                           current_position.z*1e3))
             current_orientation = my_position_tracker.get_current_heading()
             print("Heading           - {:.3f} degrees".format(current_orientation))
+            #my_position_tracker.set_current_position(Position(x=0.0, y=0.0, z=0.0))
             time.sleep(1)
     except KeyboardInterrupt:
         my_position_tracker.stop()
