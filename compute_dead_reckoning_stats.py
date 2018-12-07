@@ -15,7 +15,7 @@ accelerations_z = []
 
 headings = []
 
-for i in range(0, 1000):
+for i in range(0, 100):
     time.sleep(1)
     heading, _, _ = bno.read_euler()
     x, y, z = bno.read_linear_acceleration()

@@ -12,11 +12,10 @@ def main():
     if len(sys.argv) != 7:
         print("Usage:")
         print("set_beacon_points.py x0 y0 x1 y1 x2 y2")
-        print(len(sys.argv))
     else:
-        coordinates = {'0': {'x': float(sys.argv[1]), 'y': float(sys.argv[2])},
-                       '1': {'x': float(sys.argv[3]), 'y': float(sys.argv[4])},
-                       '2': {'x': float(sys.argv[5]), 'y': float(sys.argv[6])}}
+        coordinates = []
+        for i in range(1, 7):
+            coordinates.append(float(sys.argv[i]))
         json_str = json.dumps(coordinates)
         output_file = open(OUTPUT_FILENAME, 'w')
         output_file.write(json_str)

@@ -59,9 +59,9 @@ class SensorFusion:
         while self.my_thread_running:
             time.sleep(1 / self.my_frequency)
             position_estimates = []
-            if self.my_positioning_imu:
-                (x, y, err) = self.my_positioning_imu.get_position_estimate()
-                position_estimates += [PositionData(x, y, err)]
+            #if self.my_positioning_imu:
+                #(x, y, err) = self.my_positioning_imu.get_position_estimate()
+                #position_estimates += [PositionData(x, y, err)]
 
             if self.my_positioning_ble:
                 (x, y, err) = self.my_positioning_ble.get_position_estimate()

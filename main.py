@@ -14,15 +14,39 @@ def main():
     Entry point for the positioning robot program.
     """
     # if there's a file with the position, get it and pass it
-    if os.path.isfile("starting_position.json"):
-        position = open("starting_position.json")
+    if os.path.isfile("start_position.json"):
+        position = open("start_position.json")
         init_pos_dict = json.loads(position.read())
         start_position = dead_reckoning.Position(x=init_pos_dict['x'], 
                                                  y=init_pos_dict['y'], 
                                                  z=0.0)
+        start_heading = init_pos_dict['heading']
     else:
         start_position = dead_reckoning.Position(x=0.0, y=0.0, z=0.0)
+        start_heading = 0.0
 
+    print("Starting Position")
+    print("X: {0}, Y: {1}, Heading: {2}".format(start_position.x, start_position.y, start_heading))
+
+    if os.path.isfile("beacon_coordinates.json"):
+        beacon_file = open("beacon_coordinates.json", 'r')
+        beacon_coords = beacon_file.read()
+        coords = json.loads(beacon_coords)
+    else:
+        coords = []
+        print("Enter coordinates of each beacon as xy points separated by a space.")
+        for i in range(1, 4):
+            input_str = input("{}: ".format(i)).strip()
+            x = float(input_str.split(' ')[0])
+            y = float(input_str.split(' ')[1])
+            coords.append(x)
+            coords.append(y)
+
+    print("Beacon Positions")
+    for i in range(1, 4):
+        print("Beacon {0}: X - {1}, Y - {2}".format(i, coords[2*(i-1)], coords[2*(i-1)+1]))
+
+    return
     # start up tcp server to take directions
 
     # start up IMU threads
