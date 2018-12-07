@@ -144,26 +144,24 @@ class DeadReckoning:
              acceleration_z_current) = self.my_bno055.read_linear_acceleration()
             self.my_sensor_mutex.release()
             # find the difference
-            diff_a_x = acceleration_x_current - acceleration_x_previous
-            diff_a_y = acceleration_y_current - acceleration_y_previous
-            diff_a_z = acceleration_z_current - acceleration_z_previous
+            diff_a_x = (acceleration_x_current - acceleration_x_previous) / 2
+            diff_a_y = (acceleration_y_current - acceleration_y_previous) / 2
+            diff_a_z = (acceleration_z_current - acceleration_z_previous) / 2
             # calculate the current velocity in each direction
-            velocity_x_current = (
-                -1*diff_a_x * delta_time) + velocity_x_previous
-            velocity_y_current = (
-                -1*diff_a_y * delta_time) + velocity_y_previous
-            velocity_z_current = (
-                -1*diff_a_z * delta_time) + velocity_z_previous
+            velocity_x_current = (diff_a_x * delta_time) + velocity_x_previous
+            velocity_y_current = (diff_a_y * delta_time) + velocity_y_previous
+            velocity_z_current = (diff_a_z * delta_time) + velocity_z_previous
 
             # change in posiiton = (change in velocity) * (change in time)
             # division by two comes for average velocity over the period
-            # TODO: this need to account for rotation of the local environment relative to global compass
-            self.my_current_position.x = ((velocity_x_current - velocity_x_previous) * delta_time) * cos(
-                self.my_current_orientation) + self.my_current_position.x
-            self.my_current_position.y = ((velocity_y_current - velocity_y_previous) * delta_time) * sin(
-                self.my_current_orientation) + self.my_current_position.y
-            self.my_current_position.z = (
-                velocity_z_current - velocity_z_previous) * delta_time + self.my_current_position.z
+            delta_v_x = (velocity_x_current - velocity_x_previous) / 2
+            delta_v_y = (velocity_y_current - velocity_y_previous) / 2
+            delta_v_z = (velocity_z_current - velocity_z_previous) / 2
+            self.my_current_position.x = (delta_v_x * delta_time * cos(self.my_current_orientation) 
+                                          + self.my_current_position.x)
+            self.my_current_position.y = (delta_v_y * delta_time * sin(self.my_current_orientation)
+                                          + self.my_current_position.y)
+            self.my_current_position.z = delta_v_z * delta_time + self.my_current_position.z
 
         return 0
 
@@ -214,7 +212,7 @@ def main():
                                                                                            current_position.y*1e3,
                                                                                            current_position.z*1e3))
             current_orientation = my_position_tracker.get_current_heading()
-            print("Change in Heading - {} degrees".format(current_orientation))
+            print("Heading           - {:.3f} degrees".format(current_orientation))
             time.sleep(1)
     except KeyboardInterrupt:
         my_position_tracker.stop()
