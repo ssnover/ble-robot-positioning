@@ -46,13 +46,11 @@ def main():
     for i in range(1, 4):
         print("Beacon {0}: X - {1}, Y - {2}".format(i, coords[2*(i-1)], coords[2*(i-1)+1]))
 
-    return
-    # start up tcp server to take directions
-
     # start up IMU threads
     my_imu_sampling = dead_reckoning.DeadReckoning(accelerometer_frequency=50, 
                                                    magnetometer_frequency=25, 
-                                                   initial_position=start_position)
+                                                   initial_position=start_position,
+                                                   initial_heading=start_heading)
     my_imu_sampling.begin()
 
     # start up BLE RSSI measurements
