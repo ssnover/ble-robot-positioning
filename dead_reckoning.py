@@ -36,6 +36,8 @@ class DeadReckoning:
         self.my_current_position = initial_position
         self.my_current_orientation = 0
         self.my_initial_orientation = 0
+        self.my_previous_position = 0
+        self.my_app_is_running = False
         self.my_starting_local_heading = initial_heading
         self.accel_freq = accelerometer_frequency
         self.mag_freq = magnetometer_frequency
@@ -83,8 +85,8 @@ class DeadReckoning:
         Starts a thread to sample the accelerometer and magnetometer
         periodically.
         """
-        self.my_app_is_running = True
         self.my_bno055.begin()
+        self.my_app_is_running = True
         calibration_file = open('bno055_calibration.bin', 'r')
         #print(calibration_file.read())
         calibration_data = calibration_file.read().split(' ')
@@ -104,45 +106,44 @@ class DeadReckoning:
         """
         Closes down the resources involved for sampling the sensors.
         """
-        self.my_app_is_running = False
         return 0
 
     def accelerometer_context(self):
         """
         Context for the accelerometer thread.
         """
-        accel_x = []
-        accel_y = []
-        accel_z = []
-        # collect five values
-        for _ in range(0, 3):
-            self.my_sensor_mutex.acquire(blocking=True)
-            accelerometer = self.my_bno055.read_linear_acceleration()
-            self.my_sensor_mutex.release()
-            accel_x += [accelerometer[0]]
-            accel_y += [accelerometer[1]]
-            accel_z += [accelerometer[2]]
-            time.sleep(1 / self.accel_freq)
+        accel_x = 0
+        accel_y = 0
+        accel_z = 0
+        time_current = datetime.datetime.now()
 
-        # find the median in x, y, and z
-        acceleration_x_current = median(accel_x)
-        acceleration_y_current = median(accel_y)
-        acceleration_z_current = median(accel_z)
+        self.my_sensor_mutex.acquire(blocking=True)
+        accelerometer = self.my_bno055.read_linear_acceleration()
+        self.my_sensor_mutex.release()
+        accel_x = accelerometer[0]
+        accel_y = accelerometer[1]
+        accel_z = accelerometer[2]
+        if abs(accel_z) < 0.1:
+            accel_z = 0
+        if abs(accel_y) < 0.1:
+            accel_y = 0
+        if abs(accel_x) < 0.1:
+            accel_x = 0
+
+        acceleration_x_current = (accel_x)
+        acceleration_y_current = (accel_y)
+        acceleration_z_current = (accel_z)
 
         velocity_x_current = 0
         velocity_y_current = 0
         velocity_z_current = 0
 
-        time_current = datetime.datetime.now()
-        self.my_current_position = Position(x=0.0, y=0.0, z=0.0)
-        self.my_previous_position = self.my_current_position
         self.my_nMinus1_position = self.my_previous_position
-        delta_time = 1 / self.accel_freq
+        self.my_previous_position = self.my_current_position
+        self.my_current_position = Position(x=0.0, y=0.0, z=0.0)
 
         while self.my_app_is_running:
             time.sleep(1 / self.accel_freq)
-            if not self.my_app_is_running:
-                break
             acceleration_x_previous = acceleration_x_current
             acceleration_y_previous = acceleration_y_current
             acceleration_z_previous = acceleration_z_current
@@ -150,42 +151,62 @@ class DeadReckoning:
             velocity_y_previous = velocity_y_current
             velocity_z_previous = velocity_z_current
             time_previous = time_current
-
+            delta_time = 1/ self.accel_freq
             # get the new time
             time_current = datetime.datetime.now()
             # time between sampling
             delta_time_prev = delta_time
-            delta_time = (time_current - time_previous).total_seconds()
+            delta_time = 1 / self.accel_freq
 
             # now collect another sensor value
             self.my_sensor_mutex.acquire(blocking=True)
             (acceleration_x_current, acceleration_y_current,
              acceleration_z_current) = self.my_bno055.read_linear_acceleration()
             self.my_sensor_mutex.release()
+            if acceleration_x_current > 1.2:
+                if acceleration_x_current < 1.5:
+                    acceleration_x_current = 0
+            acceleration_x_current = acceleration_x_current + 0.05
+            acceleration_z_current = acceleration_z_current + 0.14
+            if abs(acceleration_x_current) < 0.1:
+                acceleration_x_current = 0
+            if abs(acceleration_y_current) < 0.1:
+                acceleration_y_current = 0
+            if abs(acceleration_z_current) < 0.1:
+                acceleration_z_current = 0
             # find the difference
-            diff_a_x = (acceleration_x_current - acceleration_x_previous) / 2
-            diff_a_y = (acceleration_y_current - acceleration_y_previous) / 2
-            diff_a_z = (acceleration_z_current - acceleration_z_previous) / 2
+            diff_a_x = (acceleration_x_current - acceleration_x_previous)
+            diff_a_y = (acceleration_y_current - acceleration_y_previous)
+            diff_a_z = (acceleration_z_current - acceleration_z_previous)
             # calculate the current velocity in each direction
-            velocity_x_current = (diff_a_x * delta_time) + velocity_x_previous
-            velocity_y_current = (diff_a_y * delta_time) + velocity_y_previous
-            velocity_z_current = (diff_a_z * delta_time) + velocity_z_previous
+            velocity_x_current = (acceleration_x_current * delta_time)*1.03 + velocity_x_previous/1.03
+            velocity_y_current = (acceleration_y_current * delta_time)*1.03 + velocity_y_previous/1.03
+            velocity_z_current = (acceleration_z_current * delta_time)*1.03 + velocity_z_previous/1.03
+
+            if abs(velocity_x_current) < 0.01:
+                velocity_x_current = 0
+            if abs(velocity_y_current) < 0.01:
+                velocity_y_current = 0
+            if abs(velocity_z_current) < 0.01:
+                velocity_z_current = 0
+
+            if abs(velocity_x_current) > 1:
+                velocity_x_current = 0
+            if abs(velocity_y_current) > 0.7:
+                velocity_Y_current = 0
+            if abs(velocity_z_current > 0.5):
+                velocity_z_current = 0
 
             # change in posiiton = (change in velocity) * (change in time)
             # division by two comes for average velocity over the period
             delta_v_x = (velocity_x_current - velocity_x_previous) / 2
             delta_v_y = (velocity_y_current - velocity_y_previous) / 2
             delta_v_z = (velocity_z_current - velocity_z_previous) / 2
-            #self.my_current_position.x = (delta_v_x * delta_time * cos(radians(self.my_current_orientation)) 
-                                      #    + self.my_current_position.x)
-            #self.my_current_position.y = (delta_v_y * delta_time * sin(radians(self.my_current_orientation))
-                                      #    + self.my_current_position.y)
-            #self.my_current_position.z = delta_v_z * delta_time + self.my_current_position.z
             self.my_nMinus1_position = self.my_previous_position
             self.my_previous_position = self.my_current_position
-            self.my_current_position.x = self.my_previous_position.x + (self.my_previous_position.x- self.my_nMinus1_position.x) * delta_time / delta_time_prev + (acceleration_x_current * delta_time * delta_time)
-            self.my_current_position.y = self.my_previous_position.y + (self.my_previous_position.y- self.my_nMinus1_position.y) * delta_time / delta_time_prev + (acceleration_y_current * delta_time * delta_time)
-            self.my_current_position.z = self.my_previous_position.z + (self.my_previous_position.z- self.my_nMinus1_position.z) * delta_time / delta_time_prev + (acceleration_z_current * delta_time * delta_time)
+            self.my_current_position.x = self.my_previous_position.x + (velocity_x_current * delta_time) + (1/2)*(acceleration_x_current*delta_time**2)
+            self.my_current_position.y = self.my_previous_position.y + (velocity_y_current * delta_time) + (1/2)*(acceleration_y_current*delta_time**2)
+            self.my_current_position.z = self.my_previous_position.z + (velocity_z_current * delta_time) + (1/2)*(acceleration_z_current*delta_time**2)
 
         return 0
 
@@ -210,9 +231,6 @@ class DeadReckoning:
         # Repeatedly measure the magnetometer and set the new orientation
         while self.my_app_is_running:
             time.sleep(1 / self.mag_freq)
-
-            if not self.my_app_is_running:
-                break
 
             self.my_sensor_mutex.acquire(blocking=True)
             (heading, _, _) = self.my_bno055.read_euler()

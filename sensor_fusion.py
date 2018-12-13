@@ -72,7 +72,7 @@ class SensorFusion:
             elif len(position_estimates) == 1:
                 self.my_position_estimate = position_estimates[0]
 
-            self.my_heading_estimate = self.my_positioning_imu.get_heading_estimate()
+            self.my_heading_estimate = self.my_positioning_imu.get_current_heading()
 
     def fuse(self, first, second):
         """

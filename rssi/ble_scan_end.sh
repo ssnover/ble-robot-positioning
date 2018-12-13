@@ -1,0 +1,1 @@
+pkill --signal SIGINT hcitool
